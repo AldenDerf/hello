@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { submitInviteCode, type AccessResult } from "@/app/actions/invite";
+import { FirstRunStory } from "./FirstRunStory";
 
 type Scene = "ACCESS" | "CHECKING" | "GRANTED" | "WARNING" | "READY" | "ALREADY_ACTIVE" | "COMPLETED";
 type ErrorKind = "INVALID" | "ERROR" | null;
@@ -163,12 +164,7 @@ export function ExperienceEntry({ hasSession }: { hasSession: boolean }) {
               </Stack>
             )}
 
-            {scene === "READY" && (
-              <Stack spacing={2}>
-                <Typography component="h1" variant="h4">Good.</Typography>
-                <Typography color="text.secondary">Let&apos;s begin.</Typography>
-              </Stack>
-            )}
+            {scene === "READY" && <FirstRunStory />}
 
             {scene === "ALREADY_ACTIVE" && (
               <Stack spacing={2}>
