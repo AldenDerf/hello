@@ -62,7 +62,10 @@ export function ExperienceEntry({ hasSession }: { hasSession: boolean }) {
         display: "grid",
         placeItems: "center",
         px: { xs: 2.5, sm: 3 },
-        py: { xs: 6, sm: 8 },
+        pt: { xs: 6, sm: 8 },
+        pb: { xs: "calc(48px + env(safe-area-inset-bottom))", sm: 8 },
+        background: "radial-gradient(ellipse 90% 60% at 50% 20%, rgba(37,55,88,0.28), transparent 72%), radial-gradient(ellipse 70% 50% at 90% 90%, rgba(111,91,67,0.07), transparent 75%), linear-gradient(160deg, #080a10 0%, #080808 68%, #0a0d15 100%)",
+        overflowX: "hidden",
       }}
     >
       <Box sx={{ width: "100%", maxWidth: 440 }}>
@@ -77,13 +80,12 @@ export function ExperienceEntry({ hasSession }: { hasSession: boolean }) {
             {scene === "ACCESS" && (
               <Stack spacing={4}>
                 <Stack spacing={2}>
-                  <Typography variant="overline" sx={{ color: "primary.main", letterSpacing: "0.18em" }}>
-                    PRIVATE ACCESS
+                  <Typography component="h1" variant="h4" sx={{ fontWeight: 600, letterSpacing: "-0.035em" }}>
+                    Oh, nice. Pinansin mo message ko. 😂
                   </Typography>
-                  <Typography component="h1" variant="h1">hello.</Typography>
-                  <Stack spacing={1} sx={{ pt: 1 }}>
-                    <Typography color="text.secondary">This page isn&apos;t really meant for everyone.</Typography>
-                    <Typography color="text.secondary">Enter the code I sent you.</Typography>
+                  <Stack spacing={2} sx={{ pt: 1 }}>
+                    <Typography sx={{ fontWeight: 600 }}>Na-curious ka, ’no?</Typography>
+                    <Typography color="text.secondary">Sige… since nandito ka na rin,<br />ilagay mo yung code. 😌</Typography>
                   </Stack>
                 </Stack>
                 <Box component="form" onSubmit={submit} noValidate>
@@ -119,7 +121,7 @@ export function ExperienceEntry({ hasSession }: { hasSession: boolean }) {
                         </Stack>
                       )}
                     </Box>
-                    <Button type="submit" variant="contained" disabled={!code.trim()} fullWidth>Enter</Button>
+                    <Button type="submit" variant="contained" disabled={!code.trim()} fullWidth>Unlock</Button>
                   </Stack>
                 </Box>
               </Stack>
@@ -140,26 +142,17 @@ export function ExperienceEntry({ hasSession }: { hasSession: boolean }) {
 
             {scene === "WARNING" && (
               <Stack spacing={4}>
-                <Typography variant="overline" sx={{ color: "primary.main", letterSpacing: "0.18em" }}>
-                  ONE-TIME ACCESS
-                </Typography>
                 <Stack spacing={3}>
                   <Typography component="h1" variant="h4" sx={{ fontWeight: 600, letterSpacing: "-0.035em" }}>
-                    This page was made for one person.
+                    This was made only for you.
                   </Typography>
-                  <Typography>One access code.<br />One first run.<br />Yours.</Typography>
-                  <Typography color="text.secondary">
-                    Once you finish this, you won&apos;t be able to open the same first-run experience again.
-                  </Typography>
-                  <Typography>So for the next few minutes...</Typography>
-                  <Typography>stay focused.</Typography>
-                  <Typography color="text.secondary">
-                    No multitasking.<br />No skipping ahead.<br />Instagram can wait.
-                  </Typography>
-                  <Typography>May tanong ako mamaya.</Typography>
+                  <Typography>Pag natapos mo na, <Box component="span" sx={{ fontWeight: 600, color: "#f5eee7" }}>hindi mo na mababalikan ’to.</Box></Typography>
+                  <Typography>Kaya saglit lang…</Typography>
+                  <Typography sx={{ fontWeight: 600 }}>dito ka muna. 😌</Typography>
+                  <Typography>May gusto lang akong sabihin.</Typography>
                 </Stack>
                 <Button variant="contained" onClick={() => setScene("READY")} fullWidth>
-                  Alright. You have my attention.
+                  Sige.
                 </Button>
               </Stack>
             )}
