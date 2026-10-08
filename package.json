@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "invite:create-test": "node --conditions=react-server --import tsx scripts/create-test-invite.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -33,6 +34,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
     "prisma": "^7.10.0",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   },
   "packageManager": "pnpm@11.25.0"
