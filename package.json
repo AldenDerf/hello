@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "invite:create-test": "node --conditions=react-server --import tsx scripts/create-test-invite.ts"
+    "invite:create-test": "node --conditions=react-server --import tsx scripts/create-test-invite.ts",
+    "invite:verify-session": "node --conditions=react-server --import tsx scripts/verify-invite-session.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
