@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "invite:create-test": "node --conditions=react-server --import tsx scripts/create-test-invite.ts",
-    "invite:verify-session": "node --conditions=react-server --import tsx scripts/verify-invite-session.ts"
+    "invite:verify-session": "node --conditions=react-server --import tsx scripts/verify-invite-session.ts",
+    "invite:verify-admin": "node --conditions=react-server --import tsx scripts/verify-admin-invite.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -24,6 +25,7 @@
     "pg": "^8.23.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "resend": "^6.32.1",
     "server-only": "^0.0.1"
   },
   "devDependencies": {

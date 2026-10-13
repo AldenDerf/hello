@@ -1,5 +1,14 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Private invite creation
+
+Set `INVITE_ADMIN_SECRET` in the server's production environment, separately from `INVITE_CODE_SECRET`. The protected endpoint creates one real invite per request using the database selected by `DATABASE_URL`. Save the returned code when you create it; only its hash is stored.
+
+```bash
+curl -X POST https://hello.aldenderf.com/api/admin/invites \
+  -H "Authorization: Bearer YOUR_INVITE_ADMIN_SECRET"
+```
+
 ## Getting Started
 
 First, run the development server:
