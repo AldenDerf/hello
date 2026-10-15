@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { config } from "dotenv";
 
 config({ path: ".env.local", quiet: true });
+// This verification must never send a live owner notification.
+delete process.env.RESEND_API_KEY;
 
 async function main() {
   if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production") {
@@ -16,6 +18,7 @@ async function main() {
   const { hashInviteCode, requireInviteEnvironment } = await import("../src/lib/invite/code");
   const { prisma } = await import("../src/lib/prisma");
   const { redeemInviteCode, completeInviteSession } = await import("../src/lib/invite/lifecycle");
+  const { dispatchInviteNotifications } = await import("../src/lib/invite/notifications");
   const { validateSessionToken, hashSessionToken } = await import("../src/lib/invite/session");
   requireInviteEnvironment();
 
@@ -38,6 +41,7 @@ async function main() {
     if (test.kind !== "SESSION") throw new Error("TEST session was not created.");
     assert.equal((await validateSessionToken(test.token)).kind, "TEST_SESSION");
     assert.deepEqual(await completeInviteSession(test.token), { kind: "TEST_ENDED" });
+    assert.equal(await prisma.inviteNotification.count({ where: { inviteId: test.inviteId } }), 0);
     const testAgain = await redeemInviteCode("HELLO-TEST");
     assert.equal(testAgain.kind, "SESSION");
     assert.equal((await prisma.inviteAccess.findUnique({ where: { id: test.inviteId } }))?.status, "UNUSED");
@@ -45,6 +49,9 @@ async function main() {
 
     const attempts = await Promise.all([redeemInviteCode(fixtureCode), redeemInviteCode(fixtureCode)]);
     assert.equal(attempts.filter((result) => result.kind === "SESSION").length, 1);
+    const redeemedNotice = await prisma.inviteNotification.findUniqueOrThrow({ where: { inviteId_event: { inviteId: fixture.id, event: "REDEEMED" } } });
+    assert.equal(redeemedNotice.acceptedAt, null);
+    assert.equal(await prisma.inviteNotification.count({ where: { inviteId: fixture.id } }), 1);
     const first = attempts.find((result) => result.kind === "SESSION");
     if (!first || first.kind !== "SESSION") throw new Error("No first session.");
     assert.equal((await validateSessionToken(first.token)).kind, "ACTIVE_INVITE_SESSION");
@@ -67,9 +74,35 @@ async function main() {
     assert.equal(afterRecovery.status, "ACTIVE");
     assert.equal(afterRecovery.redeemedAt?.getTime(), active.redeemedAt?.getTime());
     assert.notEqual(afterRecovery.sessionTokenHash, active.sessionTokenHash);
+    assert.equal(await prisma.inviteNotification.count({ where: { inviteId: fixture.id } }), 1);
     assert.equal((await validateSessionToken(first.token)).kind, "NO_SESSION");
 
     assert.deepEqual(await completeInviteSession(recovered.token), { kind: "COMPLETED" });
+    assert.deepEqual(await completeInviteSession(recovered.token), { kind: "NO_SESSION" });
+    assert.equal(await prisma.inviteNotification.count({ where: { inviteId: fixture.id } }), 2);
+    process.env.RESEND_API_KEY = "mock-only";
+    const sent: string[] = [];
+    await prisma.inviteNotification.updateMany({ where: { inviteId: fixture.id }, data: { nextAttemptAt: new Date(0) } });
+    await dispatchInviteNotifications(async (_message, key) => { sent.push(key); throw new Error("Mock provider failure"); });
+    assert.equal(sent.length, 2);
+    assert.equal(await prisma.inviteNotification.count({ where: { inviteId: fixture.id, acceptedAt: null } }), 2);
+    await prisma.inviteNotification.updateMany({ where: { inviteId: fixture.id }, data: { nextAttemptAt: new Date(0) } });
+    const accept = async (message: { text: string }, key: string) => {
+      assert.match(message.text, /Philippine Standard Time/);
+      assert.ok(!message.text.includes(fixtureCode));
+      sent.push(key);
+    };
+    await Promise.all([dispatchInviteNotifications(accept), dispatchInviteNotifications(accept)]);
+    assert.equal(sent.length, 4);
+    assert.equal(new Set(sent).size, 2);
+    assert.equal(await prisma.inviteNotification.count({ where: { inviteId: fixture.id, acceptedAt: null } }), 0);
+    await dispatchInviteNotifications(async () => { throw new Error("Already accepted notification was resent."); });
+    await prisma.inviteNotification.update({
+      where: { id: redeemedNotice.id },
+      data: { acceptedAt: null, attempts: 5, nextAttemptAt: new Date(0) },
+    });
+    await dispatchInviteNotifications(async () => { throw new Error("Permanent failure was retried."); });
+    assert.ok((await prisma.inviteNotification.findUniqueOrThrow({ where: { id: redeemedNotice.id } })).deadAt);
     const completed = await prisma.inviteAccess.findUniqueOrThrow({ where: { id: fixture.id } });
     assert.equal(completed.status, "COMPLETED");
     assert.ok(completed.completedAt);

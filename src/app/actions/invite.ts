@@ -1,11 +1,19 @@
 "use server";
 
 import { completeInviteWithCookie, redeemInviteWithCookie } from "@/lib/invite/cookie";
+import { allowInviteAttempt } from "@/lib/invite/rate-limit";
+import { headers } from "next/headers";
 
 export type AccessResult = { kind: "INVALID" | "ACTIVE" | "TEST" | "COMPLETED" | "ALREADY_ACTIVE" | "ERROR" };
 
 export async function submitInviteCode(rawCode: string): Promise<AccessResult> {
   try {
+    if (typeof rawCode !== "string" || rawCode.length > 64) return { kind: "INVALID" };
+    const requestHeaders = await headers();
+    const ip = process.env.NODE_ENV === "production"
+      ? requestHeaders.get("x-vercel-forwarded-for")
+      : requestHeaders.get("x-vercel-forwarded-for") ?? requestHeaders.get("x-forwarded-for") ?? "local";
+    if (!ip || !(await allowInviteAttempt(ip))) return { kind: "INVALID" };
     const result = await redeemInviteWithCookie(rawCode);
     switch (result.kind) {
       case "TEST":

@@ -9,7 +9,8 @@
     "lint": "eslint",
     "invite:create-test": "node --conditions=react-server --import tsx scripts/create-test-invite.ts",
     "invite:verify-session": "node --conditions=react-server --import tsx scripts/verify-invite-session.ts",
-    "invite:verify-admin": "node --conditions=react-server --import tsx scripts/verify-admin-invite.ts"
+    "invite:verify-admin": "node --conditions=react-server --import tsx scripts/verify-admin-invite.ts",
+    "invite:verify-operations": "node --conditions=react-server --import tsx scripts/verify-invite-operations.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

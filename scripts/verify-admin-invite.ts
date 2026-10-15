@@ -3,6 +3,8 @@ import { randomBytes } from "node:crypto";
 import { config } from "dotenv";
 
 config({ path: ".env.local", quiet: true });
+// This verification must never send a live owner notification.
+delete process.env.RESEND_API_KEY;
 
 async function main() {
   if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production") {

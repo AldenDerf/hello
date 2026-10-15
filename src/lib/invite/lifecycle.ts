@@ -3,6 +3,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { lookupInviteCode } from "./lookup";
 import { createSessionToken, hashSessionToken, SESSION_SECONDS, validateSessionToken } from "./session";
+import { dispatchInviteNotifications } from "./notifications";
 
 export type RedeemResult =
   | { kind: "INVALID" | "ALREADY_ACTIVE" | "COMPLETED" }
@@ -45,29 +46,36 @@ export async function redeemInviteCode(rawCode: string, existingToken?: string):
   }
 
   const now = new Date();
-  const updated = await prisma.inviteAccess.updateMany({
-    where: lookup.kind === "INVITE_UNUSED"
-      ? { id: lookup.inviteId, codeType: "INVITE", status: "UNUSED" }
-      : {
-          id: lookup.inviteId,
-          codeType: "INVITE",
-          status: "ACTIVE",
-          OR: [{ sessionExpiresAt: { lte: now } }, { sessionExpiresAt: null }],
-        },
-    data: lookup.kind === "INVITE_UNUSED"
-      ? {
-          status: "ACTIVE",
-          redeemedAt: now,
-          sessionTokenHash: session.sessionTokenHash,
-          sessionExpiresAt: session.expiresAt,
-        }
-      : {
-          sessionTokenHash: session.sessionTokenHash,
-          sessionExpiresAt: session.expiresAt,
-        },
+  const updated = await prisma.$transaction(async (tx) => {
+    const result = await tx.inviteAccess.updateMany({
+      where: lookup.kind === "INVITE_UNUSED"
+        ? { id: lookup.inviteId, codeType: "INVITE", status: "UNUSED" }
+        : {
+            id: lookup.inviteId,
+            codeType: "INVITE",
+            status: "ACTIVE",
+            OR: [{ sessionExpiresAt: { lte: now } }, { sessionExpiresAt: null }],
+          },
+      data: lookup.kind === "INVITE_UNUSED"
+        ? {
+            status: "ACTIVE",
+            redeemedAt: now,
+            sessionTokenHash: session.sessionTokenHash,
+            sessionExpiresAt: session.expiresAt,
+          }
+        : {
+            sessionTokenHash: session.sessionTokenHash,
+            sessionExpiresAt: session.expiresAt,
+          },
+    });
+    if (result.count === 1 && lookup.kind === "INVITE_UNUSED") {
+      await tx.inviteNotification.create({ data: { inviteId: lookup.inviteId, event: "REDEEMED", occurredAt: now } });
+    }
+    return result;
   });
 
   if (updated.count !== 1) return { kind: "ALREADY_ACTIVE" };
+  if (lookup.kind === "INVITE_UNUSED") await dispatchInviteNotifications().catch(() => undefined);
   return { kind: "SESSION", codeType: "INVITE", inviteId: lookup.inviteId, token: session.token, expiresAt: session.expiresAt };
 }
 
@@ -82,20 +90,28 @@ export async function completeInviteSession(token?: string) {
   }
   if (session.kind !== "ACTIVE_INVITE_SESSION") return { kind: "NO_SESSION" as const };
 
-  const updated = await prisma.inviteAccess.updateMany({
-    where: {
-      id: session.inviteId,
-      codeType: "INVITE",
-      status: "ACTIVE",
-      sessionTokenHash: hashSessionToken(token!),
-      sessionExpiresAt: { gt: new Date() },
-    },
-    data: {
-      status: "COMPLETED",
-      completedAt: new Date(),
-      sessionTokenHash: null,
-      sessionExpiresAt: null,
-    },
+  const now = new Date();
+  const updated = await prisma.$transaction(async (tx) => {
+    const result = await tx.inviteAccess.updateMany({
+      where: {
+        id: session.inviteId,
+        codeType: "INVITE",
+        status: "ACTIVE",
+        sessionTokenHash: hashSessionToken(token!),
+        sessionExpiresAt: { gt: now },
+      },
+      data: {
+        status: "COMPLETED",
+        completedAt: now,
+        sessionTokenHash: null,
+        sessionExpiresAt: null,
+      },
+    });
+    if (result.count === 1) {
+      await tx.inviteNotification.create({ data: { inviteId: session.inviteId, event: "COMPLETED", occurredAt: now } });
+    }
+    return result;
   });
+  if (updated.count === 1) await dispatchInviteNotifications().catch(() => undefined);
   return updated.count === 1 ? { kind: "COMPLETED" as const } : { kind: "NO_SESSION" as const };
 }

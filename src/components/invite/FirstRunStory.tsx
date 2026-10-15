@@ -14,7 +14,7 @@ const scenes: Scene[] = [
   { lines: [phrase("Normally, magme-message lang dapat ako ng ", "“Hi.”"), line("Kaso somehow..."), line("gumawa pa ako ng website. 😂", true)], action: "Oo nga eh." },
   { lines: [line("Since nandito ka na rin…"), line("sayang naman kung hanggang “Hi” lang. 😅", true)], action: "Sige, tuloy mo." },
   { lines: [line("Actually..."), line("nakita na kita before.", true), line("And honestly..."), line("napansin talaga kita. 😅", true)], action: "Tapos?", quiet: true },
-  { lines: [line("Honestly..."), line("nung nakita kita,"), line("ito talaga yung una kong naisip:"), line("“Ang ganda niya.” 😅", true), line("Simple lang ’yun."), line("Pero somehow, naalala pa rin kita.", true)], action: "Haha okay...", quiet: true },
+  { lines: [line("Nung una kitang nakita,"), line("ito talaga yung naisip ko:"), line("“Ang ganda niya.” 😅", true), line("Simple lang ’yun."), line("Pero somehow, naalala pa rin kita.", true)], action: "Haha okay...", quiet: true },
   { lines: [line("Lately..."), line("biglang lumabas Instagram mo."), line("Napatingin ako nang:"), line("“Wait... parang siya ’to ah.”", true), line("Kaya…"), line("Follow. 😂", true)], action: "Smooth." },
   { lines: [line("Tapos nag-request ka rin mag-follow back."), line("Nagulat ako dun. 😅", true), line("Napa-isip ako:"), line("“Sige… baka magandang timing na ’to.”", true), phrase("Para sabihin na rin yung ", "gusto kong sabihin sa’yo.")], action: "Ano ’yon?" },
   { lines: [line("Pero bago ’yon…"), line("Simpleng message lang sana ’to."), phrase("Kaso naisip ko, ", "baka ma-seen lang ako. 😂"), line("Ang ending…"), line("gumawa na lang ako ng buong website. 😂", true), phrase("Para at least, ", "may effort bago ma-seen. 😭😂")], action: "Grabe ka. 😂" },
