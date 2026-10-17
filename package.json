@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "invite:create-test": "node --conditions=react-server --import tsx scripts/create-test-invite.ts",
+    "invite:verify-session": "node --conditions=react-server --import tsx scripts/verify-invite-session.ts",
+    "invite:verify-admin": "node --conditions=react-server --import tsx scripts/verify-admin-invite.ts",
+    "invite:verify-operations": "node --conditions=react-server --import tsx scripts/verify-invite-operations.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -14,18 +18,27 @@
     "@mui/icons-material": "^9.4.0",
     "@mui/material": "^9.4.0",
     "@mui/material-nextjs": "^9.4.0",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "dotenv": "^18.0.6",
     "motion": "^14.0.0",
     "next": "16.4.0",
+    "pg": "^8.23.1",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "resend": "^6.32.1",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
+    "prisma": "^7.10.0",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   },
   "packageManager": "pnpm@11.25.0"

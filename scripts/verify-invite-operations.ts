@@ -1,0 +1,74 @@
+import assert from "node:assert/strict";
+import { createHmac, randomBytes } from "node:crypto";
+import { config } from "dotenv";
+
+config({ path: ".env.local", quiet: true });
+delete process.env.RESEND_API_KEY;
+
+async function main() {
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production") throw new Error("Development verification only.");
+  const url = new URL(process.env.DATABASE_URL ?? "");
+  if (decodeURIComponent(url.pathname.slice(1)) !== "mva_dev") throw new Error("Verification requires mva_dev.");
+
+  const { prisma } = await import("../src/lib/prisma");
+  const { allowInviteAttempt, resolveInviteRateLimitIdentity, shouldRateLimitInviteAttempt } = await import("../src/lib/invite/rate-limit");
+  const { isAuthorizedCron } = await import("../src/lib/invite/cron-auth");
+  const { GET } = await import("../src/app/api/cron/invite-notifications/route");
+  const ip = `test-${randomBytes(16).toString("hex")}`;
+  const secret = randomBytes(32).toString("hex");
+  process.env.CRON_SECRET = secret;
+  const existingKeys = new Set((await prisma.inviteRateLimit.findMany({ select: { key: true } })).map((row) => row.key));
+
+  try {
+    assert.equal(isAuthorizedCron(null), false);
+    assert.equal(isAuthorizedCron("Bearer wrong"), false);
+    assert.equal(isAuthorizedCron(`Bearer ${secret}`), true);
+    const unauthorized = await GET(new Request("http://localhost/api/cron/invite-notifications"));
+    assert.equal(unauthorized.status, 401);
+    assert.equal(unauthorized.headers.get("Cache-Control"), "no-store");
+    const context = {
+      nodeEnv: "production", vercel: undefined, vercelEnv: undefined,
+      databaseUrl: "postgres://localhost/mva_dev", vercelForwardedFor: null,
+    };
+    const localIdentity = resolveInviteRateLimitIdentity(context);
+    assert.equal(localIdentity, "local-production");
+    assert.equal(shouldRateLimitInviteAttempt(context), true);
+    assert.equal(resolveInviteRateLimitIdentity({ ...context, vercelForwardedFor: "spoofed" }), localIdentity);
+    assert.equal(resolveInviteRateLimitIdentity({ ...context, vercel: "1" }), null);
+    assert.equal(resolveInviteRateLimitIdentity({ ...context, vercelEnv: "preview" }), null);
+    assert.equal(resolveInviteRateLimitIdentity({ ...context, databaseUrl: "postgres://localhost/mva" }), null);
+    assert.equal(resolveInviteRateLimitIdentity({ ...context, vercel: "1", vercelForwardedFor: "203.0.113.1" }), "203.0.113.1");
+    assert.equal(resolveInviteRateLimitIdentity({ ...context, nodeEnv: "development", vercelForwardedFor: "spoofed" }), "local-development");
+    assert.equal(shouldRateLimitInviteAttempt({ ...context, nodeEnv: "development", vercelForwardedFor: "spoofed" }), false);
+    assert.equal(shouldRateLimitInviteAttempt({ ...context, nodeEnv: "development", vercel: "1" }), true);
+    assert.equal(shouldRateLimitInviteAttempt({ ...context, nodeEnv: "development", databaseUrl: "postgres://localhost/mva" }), true);
+    const allowed = await Promise.all(Array.from({ length: 12 }, () => allowInviteAttempt(ip)));
+    assert.equal(allowed.filter(Boolean).length, 8);
+    assert.equal(allowed.filter((value) => !value).length, 4);
+    assert.equal(await allowInviteAttempt(`${ip}-other`), true);
+    const window = Math.floor(Date.now() / (15 * 60_000));
+    const key = createHmac("sha256", process.env.INVITE_CODE_SECRET!)
+      .update(`invite-rate:${window}:${ip}`).digest("hex");
+    const expiry = await prisma.$queryRaw<Array<{ epoch: number }>>`
+      SELECT EXTRACT(EPOCH FROM "expiresAt" AT TIME ZONE 'UTC')::double precision AS "epoch"
+      FROM "private_app"."invite_rate_limit" WHERE "key" = ${key}
+    `;
+    assert.ok(expiry[0]);
+    assert.ok(expiry[0].epoch * 1000 > Date.now());
+    assert.ok(expiry[0].epoch * 1000 <= Date.now() + 15 * 60_000);
+    const rows = await prisma.inviteRateLimit.findMany();
+    assert.ok(rows.every((row) => !row.key.includes(ip)));
+    console.log("Invite operations verification passed.");
+  } finally {
+    const newKeys = (await prisma.inviteRateLimit.findMany({ select: { key: true } }))
+      .map((row) => row.key).filter((key) => !existingKeys.has(key));
+    await prisma.inviteRateLimit.deleteMany({ where: { key: { in: newKeys } } });
+    await prisma.$disconnect();
+    delete process.env.CRON_SECRET;
+  }
+}
+
+main().catch((error: unknown) => {
+  console.error(error instanceof Error ? error.message : "Operations verification failed.");
+  process.exitCode = 1;
+});
