@@ -1,5 +1,7 @@
 -- Read-only. Run in the production Supabase SQL Editor before any setup SQL.
--- Expected database: mva. Save results privately; do not paste credentials.
+-- Expected database name: postgres. This name does not identify a Supabase project.
+-- Before any production write, explicitly confirm the intended project ref and
+-- connection host in the Supabase Dashboard. Save results privately.
 BEGIN READ ONLY;
 
 SELECT current_database() AS database_name, current_user AS role_name,

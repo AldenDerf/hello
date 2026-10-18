@@ -1,12 +1,14 @@
 -- First-time setup only. Run in the reviewed production SQL Editor session
 -- after 01-production-preflight.sql and a verified backup. Do not rerun.
+-- Confirm the intended Supabase project ref in the Dashboard before execution;
+-- the postgres database name alone does not identify the project.
 -- Every persistent object created here belongs to private_app.
 BEGIN;
 
 DO $guard$
 BEGIN
-  IF current_database() <> 'mva' THEN
-    RAISE EXCEPTION 'Expected production database mva, got %', current_database();
+  IF current_database() <> 'postgres' THEN
+    RAISE EXCEPTION 'Expected production database postgres, got %', current_database();
   END IF;
 
   IF to_regnamespace('private_app') IS NOT NULL AND (
