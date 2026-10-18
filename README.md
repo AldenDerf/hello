@@ -1,45 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 👋 Hello.
 
-## Private invite creation
+**A small interactive experience. A different way to say hello.**
 
-Set `INVITE_ADMIN_SECRET` in the server's production environment, separately from `INVITE_CODE_SECRET`. The protected endpoint creates one real invite per request using the database selected by `DATABASE_URL`. Save the returned code when you create it; only its hash is stored.
+Hello is a private, invitation-only web experience built with modern web technologies.
+
+Instead of presenting everything at once, it lets visitors discover a story through a carefully designed, interactive journey.
+
+Some things are better experienced than explained.
+
+**Live Website:** https://hello.aldenderf.com
+
+---
+
+## About the Project
+
+Hello is a personal side project exploring how technology, storytelling, and interaction can create a more meaningful digital experience.
+
+The project focuses on minimalist design, intentional interactions, privacy, and a smooth user experience.
+
+## Features
+
+- **Invitation-only access** — Visitors enter a unique access code.
+- **Interactive storytelling** — A guided experience with animated transitions.
+- **Private sessions** — Server-side session management and expiration.
+- **One-time invitations** — Controlled access for designated recipients.
+- **Email notifications** — Event-driven notifications with retry handling.
+- **Responsive design** — Built for both mobile and desktop.
+- **Security controls** — Hashed invitation codes, rate limiting, and protected administrative operations.
+
+## Tech Stack
+
+| Category | Technology |
+|---|---|
+| Framework | Next.js 16 |
+| Language | TypeScript |
+| UI | React 19, Material UI |
+| Animation | Motion |
+| Database | PostgreSQL (Supabase) |
+| ORM | Prisma 7 |
+| Email | Resend |
+| Deployment | Vercel |
+| Package Manager | pnpm |
+
+## Development
+
+This project uses pnpm.
 
 ```bash
-curl -X POST https://hello.aldenderf.com/api/admin/invites \
-  -H "Authorization: Bearer YOUR_INVITE_ADMIN_SECRET"
-```
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+pnpm exec prisma generate
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Local development requires the appropriate environment variables and database configuration.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Build and quality checks:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm lint
+pnpm exec tsc --noEmit
+pnpm build
+```
 
-## Learn More
+For production database preparation and migration guidance, see `docs/deployment/README.md`.
 
-To learn more about Next.js, take a look at the following resources:
+## Privacy & Security
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Hello is designed around limited, intentional access.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Invitation codes are not stored in plaintext, private sessions are managed server-side, and sensitive application settings remain outside version control.
 
-## Deploy on Vercel
+The source code is public for portfolio and learning purposes, but access to the interactive experience is restricted.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project Philosophy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Not every project needs to solve a big problem.
+
+Sometimes, building something meaningful is reason enough.
+
+**Made with curiosity, code, and a little courage.**
+
+---
+
+Created by [Alden Derf](https://aldenderf.com).
